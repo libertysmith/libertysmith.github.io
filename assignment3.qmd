@@ -1,0 +1,54 @@
+---
+title: "EPPS 6323: Lab03"
+author: "Libby Smith"
+format: html
+editor: visual
+---
+
+# Multiple Regression with TEDS Data
+
+## Assignment 3 - Working with data from the last assignment, run a regression with the relevant variables:
+
+female, DPP, age, income, edu, Taiwanese, and Econ_worse, Tondu. Tondu is again our 7 level factor output variable that is a nominal categorical vector. First we prepare the data as we did the last assignment:
+
+```{r}
+library(dplyr)
+library(haven)
+TEDS_2016 <- read_stata("https://github.com/datageneration/home/blob/master/DataProgramming/data/TEDS_2016.dta?raw=true")
+
+ChosenRows <- TEDS_2016 %>% select(female, DPP, age, income, edu, Taiwanese, Tondu, Econ_worse)
+```
+
+Thus, I select a multinomial logistic regression to understand how the other variables like education or outlook on the economy may influence a voter's decision on the question of Taiwans reunification. To do this, I use the **nnet** package.
+
+```{r}
+library(nnet)
+multinom_mod <- multinom(Tondu ~ female+ DPP+ age+ income+ edu+ Taiwanese+ Econ_worse, data = ChosenRows, model = T)
+summary(multinom_mod) #Logit Coefficients  
+```
+
+Assuming model tests and validation affirm the output, we can write out the following research statements as a result: The multinomial logistic regression model showed that age is a significant predictor of Taiwanese voters' preferences for reunification with China. Specifically, a one-unit increase in age is associated with a statistically significant decrease in the log odds of preferring independence now (β = -0.0479, SE = 0.0235, p \< .05) and a statistically significant increase in the log odds of preferring status quo forever (β = -0.0083, SE = 0.0039, p \< .05). These results suggest that older Taiwanese voters are more likely to prefer the status quo option, and less likely to support independence now, compared to younger voters.
+
+```{r}
+library(car)
+Anova(multinom_mod) #Significance testing with Liklihood Ratio
+```
+
+The results of the chi-squared test indicated that the association between the seven-level outcome variable (representing Taiwanese voters' preferences for reunification with China) and the predictors of age, sex, partisanship, residency, and education were all statistically significant at the p \< .05 level. However, the predictors of income and economic outlook (econ_worse) did not achieve statistical significance in this analysis. These findings suggest that income and economic outlook may not play a significant role in shaping Taiwanese voters' preferences for reunification with China, compared to the other factors included in the model. It's important to note that the other predictors did demonstrate a significant association with the outcome variable, providing evidence for the influence of these variables on Taiwanese voters' attitudes toward reunification.
+
+This study examined the relationship between demographic and attitudinal factors, including age, sex, partisanship, income, education, residency, and economic outlook, and Taiwanese voters' preferences on the issue of reunification with China. Results from the multinomial logistic regression indicate that several factors significantly influence these preferences. Specifically, respondents who identified as female were more likely to prefer status quo or independence, while those who identified with the Democratic Progressive Party (DPP) were more likely to prefer unification in the future or status quo with a decision later. Older age was associated with a preference for status quo, while higher income was associated with a preference for unification in the future or status quo with a decision later. Respondents with higher levels of education were more likely to prefer status quo or independence, while those who live in Taiwan were more likely to prefer status quo or independence in the future. Finally, respondents who held a more negative economic outlook were more likely to prefer independence now. These findings have implications for understanding the complex attitudes of Taiwanese voters towards reunification with China and may inform future efforts to address this issue.
+
+## Common Beginner Problems
+
+Had we not accounted for the data types of the variables, running a linear regression with factor or categorical variables in the dependent output would have caused some confusion. Since the dependent variable is a nominal unranked scale of options selected by the survey respondents, using a linear model or visualizing the data through continuous-friendly visualizations will result in some unhelpful funky graphs, as seen below. The below commands result in a regplot. A regression plot is particularly useful for identifying trends or patterns in the data, and for visualizing the strength and direction of the relationship between a continuous dependent variables and input variables. The plot includes a scatterplot of the data points, with the regression line overlaid on top. Below we listed the commands for the regplot using only the dependent variable **Tondu** and independent variables **Age, Income, and Edu**.
+
+```{r}
+regplot=function(x,y,...){ #Save the linear function in environment
+     fit=lm(y~x)
+     plot(x,y,...)
+    abline(fit,col="red")
+}
+regplot(ChosenRows$age+ChosenRows$income+ChosenRows$edu, ChosenRows$Tondu, xlab="Age, Income, and Education", ylab="Tondu", col="blue", pch=15)
+```
+
+The resulting graph is unreadable due to the specified model being unfit to properly analyse the data. To improve the model, we select a multinomial logistic regression. This also renders the need for normality assumption redundant as it uses Z scores instead of t-test statistic. However, model validation for multinomial logistic regression requires dealing meaningfully with multicollinearity and sample sizes.

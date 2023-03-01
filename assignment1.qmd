@@ -1,0 +1,25 @@
+# Proposed Hypothesis - Is screen exposure associated to loss of long-form focus?
+
+## Assignment 1 - Knowledge Mining
+
+1.  Hypothesis: Are high rates of screen time on a hand-held device during elementary school years associated with a high probability of ADHD-like symptoms?
+
+\
+
+In recent years, a high rate of interest and concern over attention deficits surrounding device usage has emerged. The concern stems from the idea that increased incidences of ADHD-like symptoms such as lack of patience, impulse control, and focus are due to rising screen time experienced as adolescents. This study is NOT a rigid study on the probabilities of an individual having a diagnoses of ADHD (although we think similar directionalities will be found). This study has a flexible definition to mean ADHD-like symptoms, so as to also include people exhibiting symptoms very similar to ADHD, but perhaps is either undiagnosed or falls out of the medical definition of ADHD. The best method, based on previous experience, is to do a logistic regression, classifying people into two classes for the output: 1) high-instances of ADHD symptoms and 2) low-instances of ADHD symptoms. My methods are typically data modeling based because of my recent experience.  
+
+\
+
+The data to be sourced should be in service of a uniform quantitative metrics or scale assessing the extent of the participants' attention deficits. We can accomplish this with survey data about each observation's attention deficit prior to the study, then again 10 years later after the study. The inputs are total weekly screen time scraped from historical Apple data during the ages between 5 and 11 and additionally the weekly amount of screen time devoted to certain activities such as social media, texting, streaming, video games, etc. 
+
+\
+
+Based on my personal experience so far with parametric modeling procedures, I would pursue logistic regression with theoretical implications. In doing so, I anticipate higher probabilities associated with participants using their devices for more kinds of activities as well as those with higher total averages than their counterparts. Participants who already score high on ADHD like symptoms cannot be considered for participation. One or more  samples ending with a minimum of 1500 elementary aged American children would be sufficient for our purposes. 
+
+\
+
+During exploratory data analysis, data visualization (univariate, bivariate) relationships will be examined and transformed as needed. We will need to examine various tests on residuals and interaction terms to test nested models and model validity. 
+
+\
+
+To start the project, we must approach the proper entities of authority to complete due diligence with ethical procedures surrounding human subjects. We must find funding for the project from the most relevant stakeholders.  

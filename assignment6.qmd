@@ -1,0 +1,56 @@
+---
+author: "Libby Smith"
+format: html
+editor: visual
+---
+
+# Logit Models with TEDS Data
+
+## Assignment 6
+
+### Are voting women in Taiwan more or less likely to vote for Candidate Tsai?
+
+First let's read in the data. Remember that male is coded as 0 and female as 1.
+
+```{r}
+library(haven)
+TEDS_2016<-read_stata("https://github.com/datageneration/home/blob/master/DataProgramming/data/TEDS_2016.dta?raw=true")
+```
+
+Then we do a simple logistic regression
+
+```{r}
+glm.vt <- glm(votetsai~female, data = TEDS_2016, family = binomial)
+summary(glm.vt)
+confint(glm.vt, level = .05)
+```
+
+The logistic regression model examines the relationship between gender (female or male) and polling for Tsai in the 2016 Taiwan presidential election. The results indicated that gender is not a significant predictor of voting behavior, as the coefficient for female was negative but not statistically significant (Estimate = -0.065, SE = 0.116, p = 0.58). The intercept was statistically significant (Estimate = 0.55, SE = 0.082, p \< 0.001), suggesting that the odds of voting for Tsai are significantly different from zero. The model has a good fit, as indicated by a non-significant residual deviance (1666.2 on 1259 degrees of freedom) and a relatively low AIC (1670.2). These findings suggest that gender did not play a significant role in determining voting behavior in the 2016 Taiwan presidential election. Thus we cannot reject the null hypothesis, instead we reject the alternate hypothesis. Doing further model fit tests would be redundant.
+
+Additionally, the model cannot be considered correctly specified for this social dynamic as it only has one variable. It does not have the power to have any practical use, or generalizability. Gender is often a control variable that allows social science researchers to more accurately assess causal relationships so that observed changes in the dependent variable can be attributed to the independent variables of interest.
+
+### Including party ID and other demographic variables
+
+To examine the dynamics that influence Tsai voters and review how gender changes with added non-control and control variables we select to add the Kuo-min Tang and Democratic Progressive Party membership, age, education, and income in the 2016 Taiwan presidential election.
+
+```{r}
+glm.vt2 <- glm(votetsai~female+KMT+DPP+age+edu+income, data = TEDS_2016, family = binomial)
+summary(glm.vt2)
+confint(glm.vt2, level = .05)
+```
+
+The results indicated that gender is again not a significant predictor of voting behavior, as the coefficient for female flipped directionally and is still not statistically significant (Estimate = .047, SE = 0.177, p = 0.79). This is to be expected with a control variable in this context. Although not all inputs are found to be statistically significant, this model is an improvement and more parsimonious than the last due to the capturing of more reliable and interpretable data in the model. The partisan elements of the model are the most relevant independent variables that are not control groups. They say something meaningful about the outputs and are not included simply to isolate causal relationships. We are interested in their potential for a causal relationship with voting for Tsai. With every one unit increase of KMT affiliation, the log odds for voting for Tsai decrease by 3.16 units, holding all other inputs constant. With every one unit increase of DPP affiliation, the log odds for voting for Tsai increase by 2.89 units, holding all other inputs constant. The Aikike Information Criterion (AIC) which is one test to assess goodness of fit for Maximum Likelihood methods. AIC is lower for the second model which indicates it is a more parsimonious model than the simple logistic model from above. Although we can reject the null hypothesis that all input coefficients are 0, let's see if additional variables will improve the next model.
+
+## Adding additional inputs
+
+This time around, we will add relevant variables Independence, Econ_worse, Govt_dont_care, Minnan_father, Mainland_father, and Taiwanese to the model to test the relevance of controls and see if we can improve parsimony.
+
+```{r}
+glm.vt3 <- glm(votetsai~female+KMT+DPP+age+edu+income+Independence+Econ_worse+Govt_dont_care+Minnan_father+Mainland_father+Taiwanese, data = TEDS_2016, family = binomial)
+summary(glm.vt3)
+confint(glm.vt3)
+```
+
+The results indicated that gender is again not a significant predictor of voting behavior, as the coefficient for female flipped directionally and is still not statistically significant (Estimate = -.10, SE = 0.190, p = 0.98). Similarly, other demo graphical control inputs such as age, have a similar relevance. Party membership remains the strongest correlations for/against votes for Tsai. The addition of 6 new inputs netted one additional input of statistical significance than the previous model. The AIC is also reduced from the previous model. For both of these reasons, this model is so far the most parsimonious of all three. Due to the non-zero coefficients in the model and their significant p-values, we can reject the null hypothesis that no input's influence is exerted on the output.
+
+We can do further tests to confirm beyond the AIC comparisons such as the Hosmer-Lemeshow Fit Test or the Pearsons Statistics to test the including or removal of variables to find the most parsimonious model from the data.

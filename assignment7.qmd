@@ -1,0 +1,128 @@
+---
+author: "Libby Smith"
+format: html
+editor: visual
+---
+
+## Testing Prediction Power: Linear Discriminant Analysis VS Logistic Regression 
+
+A review of the predictive power for two important computation methods starting with Logistic regression. 
+
+Load ISLR library, Review Smarket Codebook, and scatterplot matrix
+
+```{r}
+library(ISLR)
+?Smarket
+df <- Smarket
+head(df)
+summary(df)
+
+```
+
+Upon review, the dataset contains Daily percentage returns for the S&P 500 index from 2001 to 2005. It has 9 variables and 1250 cases. All inputs except Direction are numerical data types. Direction is binary variable indicating the performance of the market for a specific day. 
+
+Bivariate Plot of inter-lag correlations
+
+```{r}
+car::scatterplotMatrix(~Direction+Year+Lag1+Lag2+Lag3+Lag4+Lag5+Volume+Today,
+data=df, diagonal="density", smooth = list(span = .5, lty.smooth=1, col.smooth="red", col.var="red"), regline=list(col="green"))
+```
+
+The above shows pairwise scatter plots between each of the variables in the dataframe. The diagonals depict univariate distributions. Scatterplot matrix are helpful in visualizing the relationships between variables and identifying correlations. Already we can see there are some slight correlations with Direction and Lags 1-5 as well as Volume. None appear to be confounding. 
+
+Logistic regression to Predict the Market
+```{r}
+glm.fit <- glm(Direction~Lag1+Lag2+Lag3+Lag4+Lag5+Volume,data=df,family=binomial) #Save Logistic Model Object
+summary(glm.fit)
+
+glm.probs <- predict(glm.fit,type="response") #Vector of  Market Performance Predictions using model probabilities P(Y=1|X)
+glm.probs[1:5]
+
+glm.pred <- ifelse(glm.probs>0.5,"Up","Down") #Vector of Binary Classification of Predictions Vector
+
+attach(df)
+table(glm.pred,Direction)
+mean(glm.pred==Direction)
+```
+
+In the case of logistic model prediction, it accurately predicted the market direction 52% of the days recorded. However the above utilizes cases from the model data to determine the error rate. A more reliable metric for the error rate is to use data not from the model to assess it thus assessing the model's generalizability.  
+
+Make training and test set for prediction
+```{r}
+train <- Year<2005 
+glm.fit2 <- glm(Direction~Lag1+Lag2+Lag3+Lag4+Lag5+Volume,
+            data=df,family=binomial, subset=train)
+glm.probs <- predict(glm.fit2,newdata=df[!train,],type="response") 
+glm.pred=ifelse(glm.probs >0.5,"Up","Down")
+Direction.2005 <- df$Direction[!train]
+table(glm.pred,Direction.2005)
+mean(glm.pred==Direction.2005)
+```
+
+Based on the new training data, 48% model accuracy is determined thus  revealing the inflated accuracy rate from using cases from the model data. This is more trustworthy since we used 4/5s of the data to model then used the remaining 1/5 of cases to assess prediction instead of allowing the held out data to inform our model.
+
+Fit Smaller Model 
+```{r}
+glm.fit3 <- glm(Direction~Lag1+Lag2,
+            data=Smarket,family=binomial, subset=train)
+glm.probs <- predict(glm.fit3,newdata=df[!train,],type="response") 
+glm.pred <- ifelse(glm.probs >0.5,"Up","Down")
+table(glm.pred,Direction.2005)
+mean(glm.pred==Direction.2005)
+```
+
+After removing the inputs with high p-values from the model leaving only Lag1 and Lag2, prediction power is incrementally improved at 56% accuracy using held out data from 2005. 
+
+While the accuracy is better than random chance, it is not particularly high. This suggests that additional predictors or more sophisticated models may be needed to accurately predict the direction of the stock market. This logistic regression model provides a starting point for further exploration and refinement of predictive models for stock market performance.
+
+
+## Linear Discriminant Analysis
+
+What are the requirements of LDA?
+LDA has a Gaussian requirement meaning the distributions of the inputs must be normal and similarity in variance across inputs. It require no collinearity and assumes linear relationships. 
+
+How is LDA different from Logistic regression?
+LDA is better designed to designate inputs into classes with large distances between them. It also performs better than logistic regression even when there are few cases. LDA utilizes Bayes Theorem to compute the probability of class membership and does so by the linear associations of each variable to create a discriminant function rather than summing the effects of all inputs (Logistic regression). Overfitting is a concern when the ratio of inputs to cases is too high. 
+
+What is ROC?
+Is a common plot that graphs sensitivity vs specificity as well as the chosen posterior thresholds for each test metric. The larger the area under the curve the better the performance of the classifier.  
+
+What is sensitivity?
+Sensitivity is the positive rate of classification or the ratio of true positives to identified positives when evaluating prediction. 
+
+What is specificity?
+Specificity is the negative rate of classification or the ratio of true negatives to identified negatives when evaluating prediction. 
+
+Both specificity and sensitivity are important metrics by which we evaluate the performance of classification models depending on the a priori needs and the application of the classification model at hand. 
+
+A confusion matrix showing 81 True and Predicted Yes defaults of 333 actual default cases has a sensitivity rate of prediction (True positive rate) of .24. Additionally, the same confusion matrix has 252 false positives in default and 23 false negative predictions. Thus out of a total of 10,000 predictions, the prediction error rate is .03. 
+
+##LDA on Smarket Prediction
+Load necessary packages
+```{r}
+library(MASS) #lda() command package
+library(descr)
+attach(df)
+
+freq(Direction) 
+train <- Year<2005 
+lda.fit <- lda(Direction~Lag1+Lag2,data=Smarket, subset=Year<2005) #Save LDA Model Object
+lda.fit
+plot(lda.fit, col="dodgerblue") #Histogram of Market Performance 
+
+Smarket.2005 <- subset(Smarket,Year==2005) # Creating subset with 2005 data for prediction
+lda.pred <- predict(lda.fit,Smarket.2005)
+names(lda.pred)
+lda.class <- lda.pred$class #Saving Separate Vector 
+Direction.2005 <- Smarket$Direction[!train]
+table(lda.class,Direction.2005) 
+
+data.frame(lda.pred)[1:5,]
+table(lda.pred$class,Smarket.2005$Direction) #Confusion Matrix
+mean(lda.pred$class==Smarket.2005$Direction)
+106/141 #True Positive Rate
+```
+
+In this example, LDA model does not perform better at predicting the market than logistic regression, in fact the model accuracy performance is similar at 56%. Again, the sensitivity of the LDA model and the logistic model are similar. This means that the LDA model correctly identified 75.18% of the instances where the stock market actually went up, out of all instances where the market actually went up in the test set. The results of the model suggests a similar need for model refining as the previous logistic model. Specifically that additional predictors or more sophisticated models may be needed to accurately predict the direction of the stock market. This linear discriminant analysis model provides a starting point for further exploration and refinement of predictive models for stock market performance.
+
+
